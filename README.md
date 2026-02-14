@@ -89,6 +89,110 @@ jobs:
 |-------|-------------|----------|---------|
 | `node-version` | Node.js version to use | No | `24.x` |
 
+### release.yml
+
+Reusable workflow for releasing new versions of GitHub Actions. Handles version bumping, building, tagging, and GitHub releases.
+
+**What it does:**
+1. Checks out the repository
+2. Sets up Node.js
+3. Installs dependencies
+4. Gets version from input or package.json
+5. Updates package.json version (if specified)
+6. Runs tests
+7. Builds the action
+8. Commits dist/ changes
+9. Creates and pushes version tag
+10. Updates major version tag (e.g., v3 -> v3.2.1)
+11. Creates GitHub Release (optional)
+
+**Usage:**
+```yaml
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.0, leave empty to use package.json version)'
+        required: false
+        type: string
+      create_release:
+        description: 'Create a GitHub Release'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    uses: actions-mn/shared/.github/workflows/release.yml@main
+    with:
+      version: ${{ inputs.version }}
+      create_release: ${{ inputs.create_release }}
+```
+
+**Inputs:**
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `version` | Version to release (empty = use package.json) | No | `''` |
+| `create_release` | Whether to create a GitHub Release | No | `true` |
+| `git_user_email` | Git user email for commits | No | `41898282+github-actions[bot]@users.noreply.github.com` |
+| `git_user_name` | Git user name for commits | No | `github-actions[bot]` |
+| `release_body` | Custom release body template | No | `''` |
+
+### update-major-version.yml
+
+Reusable workflow for updating major version tags. Can also be used as a rollback tool to point a major version tag to a specific commit.
+
+**What it does:**
+1. Checks out the repository with full history
+2. Configures git user
+3. Force-updates the major version tag to point to the target
+4. Pushes the updated tag
+
+**Usage:**
+```yaml
+name: Update Main Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      major_version:
+        description: 'The major version tag to update'
+        required: true
+        type: choice
+        options:
+          - v3
+          - v2
+          - v1
+      target:
+        description: 'The tag or reference to point to'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-tag:
+    uses: actions-mn/shared/.github/workflows/update-major-version.yml@main
+    with:
+      major_version: ${{ inputs.major_version }}
+      target: ${{ inputs.target }}
+```
+
+**Inputs:**
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `major_version` | The major version tag to update (e.g., v1, v2, v3) | Yes | - |
+| `target` | The tag or reference to point to | Yes | - |
+
 ## Setting Up a New actions-mn Action
 
 ### 1. Package Structure
@@ -100,7 +204,9 @@ my-action/
 ├── .github/
 │   └── workflows/
 │       ├── test.yml
-│       └── check-dist.yml
+│       ├── check-dist.yml
+│       ├── release.yml
+│       └── update-main-version.yml
 ├── src/
 │   └── main.ts
 ├── dist/
@@ -186,6 +292,67 @@ on:
 jobs:
   check-dist:
     uses: actions-mn/shared/.github/workflows/check-dist.yml@main
+```
+
+Create `.github/workflows/release.yml`:
+
+```yaml
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.2.0)'
+        required: false
+        type: string
+      create_release:
+        description: 'Create a GitHub Release'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    uses: actions-mn/shared/.github/workflows/release.yml@main
+    with:
+      version: ${{ inputs.version }}
+      create_release: ${{ inputs.create_release }}
+```
+
+Create `.github/workflows/update-main-version.yml`:
+
+```yaml
+name: Update Main Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      major_version:
+        description: 'The major version to update'
+        required: true
+        type: choice
+        options:
+          - v3
+          - v2
+          - v1
+      target:
+        description: 'The tag or reference to use'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    uses: actions-mn/shared/.github/workflows/update-major-version.yml@main
+    with:
+      major_version: ${{ inputs.major_version }}
+      target: ${{ inputs.target }}
 ```
 
 ### 4. TypeScript Configuration

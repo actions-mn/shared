@@ -1,0 +1,51 @@
+# Reusable workflow for updating major version tags
+#
+# This workflow can also be used as a rollback tool by pointing a major version
+# tag to a specific commit or tag.
+#
+# Usage:
+#   jobs:
+#     update-tag:
+#       uses: actions-mn/shared/.github/workflows/update-major-version.yml@main
+#       with:
+#         major_version: 'v3'
+#         target: 'v3.2.1'
+
+name: Update Major Version
+
+on:
+  workflow_call:
+    inputs:
+      major_version:
+        description: 'The major version tag to update (e.g., v1, v2, v3)'
+        required: true
+        type: string
+      target:
+        description: 'The tag or reference to point to'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    name: Update ${{ inputs.major_version }} to ${{ inputs.target }}
+    runs-on: ubuntu-latest
+    steps:
+      # Note this update workflow can also be used as a rollback tool.
+      # For that reason, it's best to pin `actions/checkout` to a known, stable version.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Git config
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Tag new target
+        run: git tag -f ${{ inputs.major_version }} ${{ inputs.target }}
+
+      - name: Push new tag
+        run: git push origin ${{ inputs.major_version }} --force
