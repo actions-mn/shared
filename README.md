@@ -210,7 +210,7 @@ my-action/
 ├── src/
 │   └── main.ts
 ├── dist/
-│   └── index.js
+│   └── index.cjs
 ├── action.yml
 ├── package.json
 ├── tsconfig.json
@@ -224,13 +224,15 @@ Your `package.json` must have these scripts:
 ```json
 {
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/main.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/index.js --minify --sourcemap",
+    "build": "tsc --noEmit && esbuild src/main.ts --bundle --platform=node --target=node24 --format=cjs --outfile=dist/index.cjs --minify --sourcemap",
     "format": "prettier --write '**/*.ts'",
     "format-check": "prettier --check '**/*.ts'",
     "test": "vitest"
   }
 }
 ```
+
+NOTE: We use `.cjs` extension because `package.json` has `"type": "module"` which makes Node.js treat `.js` files as ESM. Since esbuild outputs CJS format (for compatibility with `@actions/cache` dependencies), we use `.cjs` to ensure proper module resolution.
 
 Optional scripts:
 ```json
@@ -394,10 +396,10 @@ Recommended `tsconfig.json` for actions-mn actions:
   },
   "devDependencies": {
     "@types/node": "^24.x",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.27.0",
     "prettier": "^3.8.0",
-    "typescript": "^5.8.0",
-    "vitest": "^3.2.0"
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0"
   }
 }
 ```
@@ -420,7 +422,7 @@ Include CI status badges in your README:
 
 ### Committing dist/
 
-For GitHub Actions, the `dist/index.js` file must be committed to the repository. Always run `npm run build` before committing changes to ensure `dist/` is up to date.
+For GitHub Actions, the `dist/index.cjs` file must be committed to the repository. Always run `npm run build` before committing changes to ensure `dist/` is up to date.
 
 ## Adding New Shared Workflows
 
