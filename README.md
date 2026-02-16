@@ -424,6 +424,26 @@ Include CI status badges in your README:
 
 For GitHub Actions, the `dist/index.cjs` file must be committed to the repository. Always run `npm run build` before committing changes to ensure `dist/` is up to date.
 
+## Templates
+
+### .gitignore
+
+A canonical `.gitignore` template is provided at `templates/gitignore`. All actions-mn repositories should use this template to ensure consistency.
+
+**To update your .gitignore:**
+```bash
+cp /path/to/shared/templates/gitignore /path/to/your-action/.gitignore
+```
+
+**What it covers:**
+- Node.js (node_modules, lock files)
+- Build outputs (lib/, *.tsbuildinfo) - NOTE: dist/ is NOT ignored since GitHub Actions require committed dist/
+- IDE/Editors (.vscode, .idea, vim swap files)
+- OS files (.DS_Store, Thumbs.db)
+- Testing (coverage/, .nyc_output/)
+- Temporary files (*.log, *.tmp, *.tgz)
+- AI context files (CLAUDE.md, .claude/, .cursor/)
+
 ## Adding New Shared Workflows
 
 When adding a new reusable workflow:
